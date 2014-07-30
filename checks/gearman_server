@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- encoding: utf-8; py-indent-offset: 4 -*-
 #
 # Description: Check to verify gearman server status
@@ -50,14 +50,18 @@ def check_gearman_server(item, params, info):
     infotext = ''
     perfdata = []
     status = 0
+    jobs_running = 0
+    total_jobs_waiting = 0
+
     for value in info:
         if len(value) is not 4:
             return (3, "Invalid output from plugin")
         
         queue = value[0]
         worker_available = saveint(value[1])
+        jobs_running += int(value[3])
         jobs_waiting = saveint(value[2])
-        jobs_running = saveint(value[3])
+        total_jobs_waiting += jobs_waiting
 
         # Warning and Critical values
         if queue in params:
@@ -80,16 +84,16 @@ def check_gearman_server(item, params, info):
                 status = 2
                 infotext += 'Queue %s(!!) has %s job whithout any worker. ' % (queue, jobs_waiting)
             elif worker_available < worker_warn:
-                status = 1
+                if status is not 2: status = 1 
                 infotext += 'Queue %s(!) has %s job whithout any worker. ' % (queue, jobs_waiting)
             elif jobs_waiting > jobs_crit:
                 status = 2
                 infotext += 'Queue %s(!!) has %s waiting jobs. ' % (queue, jobs_waiting)
             elif jobs_waiting > jobs_warn:
-                status = 1
+                if status is not 2: status = 1 
                 infotext += 'Queue %s(!) has %s waiting jobs. ' % (queue, jobs_waiting)
     if status == 0:
-        infotext = '%s jobs running and %s jobs waiting. ' % (jobs_running, jobs_waiting)
+        infotext = '%s jobs running and %s jobs waiting. ' % (jobs_running, total_jobs_waiting)
 
     return (status, infotext, perfdata)
 
@@ -100,3 +104,5 @@ check_info['gearman_server'] = {
     'has_perfdata'            : True,
     "default_levels_variable" : "gearman_server_default_levels",
 }
+
+

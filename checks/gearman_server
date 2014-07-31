@@ -53,6 +53,9 @@ def check_gearman_server(item, params, info):
     jobs_running = 0
     total_jobs_waiting = 0
 
+    if not info:
+        return (2, 'Gearman Server is not responding.')
+
     for value in info:
         if len(value) is not 4:
             return (3, "Invalid output from plugin")

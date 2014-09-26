@@ -85,18 +85,18 @@ def check_gearman_server(item, params, info):
         else:
             if worker_available < worker_crit:
                 status = 2
-                infotext += 'Queue %s(!!) has %s job whithout any worker. ' % (queue, jobs_waiting)
+                infotext += 'Queue %s(!!) has %d workers. ' % (queue, worker_available)
             elif worker_available < worker_warn:
                 if status is not 2: status = 1 
-                infotext += 'Queue %s(!) has %s job whithout any worker. ' % (queue, jobs_waiting)
+                infotext += 'Queue %s(!) has %d workers. ' % (queue, worker_available)
             elif jobs_waiting > jobs_crit:
                 status = 2
-                infotext += 'Queue %s(!!) has %s waiting jobs. ' % (queue, jobs_waiting)
+                infotext += 'Queue %s(!!) has %d waiting jobs. ' % (queue, jobs_waiting)
             elif jobs_waiting > jobs_warn:
                 if status is not 2: status = 1 
-                infotext += 'Queue %s(!) has %s waiting jobs. ' % (queue, jobs_waiting)
+                infotext += 'Queue %s(!) has %d waiting jobs. ' % (queue, jobs_waiting)
     if status == 0:
-        infotext = '%s jobs running and %s jobs waiting. ' % (jobs_running, total_jobs_waiting)
+        infotext = '%d jobs running and %d jobs waiting. ' % (jobs_running, total_jobs_waiting)
 
     return (status, infotext, perfdata)
 

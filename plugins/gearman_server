@@ -5,4 +5,4 @@
 #
 
 echo '<<<gearman_server>>>'
-/usr/bin/gearman_top -b | /bin/sed -r '1,4d; $d; s/\| +/ /g'
+sleep 2; /usr/bin/gearman_top -b | /bin/sed -r '1,4d; $d; s/\| +/ /g'

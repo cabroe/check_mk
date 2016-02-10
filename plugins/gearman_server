@@ -4,5 +4,15 @@
 # Author: Phillipe Smith <phillipe.chaves@camara.leg.br>
 #
 
-echo '<<<gearman_server>>>'
-sleep 2; /usr/bin/gearman_top -b | /bin/sed -r '1,4d; $d; s/\| +/ /g'
+if [ `which omd 2>/dev/null` ]; then
+    OMD_VERSION=`omd versions | awk '/default/ {print $1}'`
+    GEARMAN_TOP_BIN=/omd/versions/$OMD_VERSION/bin/gearman_top
+    export LD_LIBRARY_PATH=/omd/versions/$OMD_VERSION/lib
+else
+    GEARMAN_TOP_BIN=`which gearman_top 2>/dev/null`
+fi
+
+if [ "$GEARMAN_TOP_BIN" ]; then
+    for i in {1..3}; do result=$($GEARMAN_TOP_BIN -b | /bin/sed -r '1,4d; $d; s/\| +/ /g; s/(.*\d)$/\1\\n/g'); sleep 1; done
+    echo -e "<<<gearman_server>>>\n$result"
+fi

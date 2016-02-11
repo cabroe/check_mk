@@ -41,7 +41,7 @@
 
 # Threshold levels
 factory_settings['ipc_info_default_levels'] = {
-    'Messages Status' : { 'used_headers': (250, 500), 'used_space': (40000, 50000) }
+    'Messages Status' : { 'used_headers': (250, 500), 'used_space': (100000, 150000) }
 }
 
 def parse_ipc_info(info):

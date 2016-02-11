@@ -1,0 +1,37 @@
+title: IPC facilities informations 
+agents: linux
+catalog: os/kernel
+license: GPL
+distribution: check_mk
+description:
+ This check provides information from the ipc facilities.
+ It shows the summary of the kernel shared memory status,
+ semaphore status and message queue status.
+  
+item:
+ A user definable service description for Nagios.
+ That description must be unique within each host.
+ Changing the description will make Nagios think that
+ it is another service.
+
+examples:
+ # For now, the only possible value that could be changed 
+ # is user_headers and used_space from Message Status
+
+ # set default levels to 1000 and 1500:
+ check_parameters = {
+     ( {'Messages Status': {'used_headers': (1000, 1500)}}, ALL_HOSTS, [ 'IPC Messages Status' ] ),
+ }
+
+inventory:
+ Describe how the inventory for the check works. Which items
+ will it find? Describe the influence of check specific
+ configuration parameters to the inventory.
+
+[parameters]
+servicename (string): Name of the service discovered on the inventory 
+counter (string): Name of the counter showed on service description or perfdata
+value (int): A tuple with values for warn and crit thresholds
+
+[configuration]
+ipc_info_default_levels (dict): A dictionary with service name as key and another dictionary with the counter as key and a tuple of 2 values as value.

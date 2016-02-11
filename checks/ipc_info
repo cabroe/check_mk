@@ -1,0 +1,115 @@
+#!/usr/bin/env python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+#
+# Description: Check to verify gearman server status
+# Author: Phillipe Smith <phillipelnx@gmail.com>
+#
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+# Output is taken from /usr/bin/ipc -u
+#<<<ipc_info>>>
+#
+# Shared Memory Status
+#segments allocated 3
+#pages allocated 589
+#pages resident  589
+#pages swapped   0
+#Swap performance 0 attempts     0 successes
+#
+# Semaphore Status
+#used arrays 18
+#allocated semaphores 18
+#
+# Messages: Status
+#allocated queues 1
+#used headers 0
+#used space 0 bytes
+
+
+# Threshold levels
+factory_settings['ipc_info_default_levels'] = {
+    'Messages Status' : { 'used_headers': (250, 500), 'used_space': (40000, 50000) }
+}
+
+def parse_ipc_info(info):
+    parsed = {}
+
+    parsed[' '.join(info[0])] = info[1:6]
+    parsed[' '.join(info[6])] = info[7:9]
+    parsed[' '.join(info[9])] = info[10:]
+
+    return parsed
+
+
+def inventory_ipc_info(parsed):
+    inventory = []
+
+    for item in parsed.keys():
+        inventory.append((item, {}))
+    return inventory
+
+
+def check_ipc_info(item, params, parsed):
+    for key, items in parsed.items():
+        status   = 0
+        info     = ''
+        value    = ''
+        infotext = []
+        perfdata = []
+
+        if item == key:
+            for item in items:
+                
+                counter = item[0]
+                
+                if item[0] == 'Swap':
+                    counter = ' '.join(item[0:2])
+                    info    = counter + ': ' + ' '.join(item[2:])
+                elif item[0] == 'used_space':
+                    value   = int(item[-2])
+                    info    = counter + ': ' + ' '.join(item[1:])
+                else:
+                    value   = int(item[-1])
+                    info    = ': '.join(item)
+                
+                if key in params.keys() and counter in params[key].keys():
+                    
+                    warn, crit = params[key][counter]                    
+                    perfdata.append((counter, value, warn, crit))
+                    
+                    if value > crit:
+                        status = 2
+                        info  += '(!!)'
+                    elif value > warn:
+                        status = 1
+                        info  += '(!)'
+                else:
+                    if value:
+                        perfdata.append((counter, value))
+                infotext.append(info)
+
+            return (status, ', '.join(infotext), perfdata)
+
+check_info['ipc_info'] = {
+    'parse_function'          : parse_ipc_info,
+    'inventory_function'      : inventory_ipc_info,
+    'check_function'          : check_ipc_info,
+    'service_description'     : 'IPC %s',
+    'has_perfdata'            : True,
+    'default_levels_variable' : 'ipc_info_default_levels',
+}
+
+

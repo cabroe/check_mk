@@ -1,0 +1,2 @@
+echo '<<<ipc_info>>>'
+LC_ALL=en_US.utf-8 ipcs -u | sed 's/\(^[a-z]*\)\s/\1_/; s/[-=:]*//g'

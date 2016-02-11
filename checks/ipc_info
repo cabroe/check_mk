@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8; py-indent-offset: 4 -*-
 #
-# Description: Check to verify gearman server status
+# Description: Check to get ipc facilities informations
 # Author: Phillipe Smith <phillipelnx@gmail.com>
 #
 #

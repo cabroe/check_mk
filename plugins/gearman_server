@@ -4,7 +4,7 @@
 # Author: Phillipe Smith <phillipe.chaves@camara.leg.br>
 #
 
-if [ `which omd 2>/dev/null` ]; then
+if [ `which omd 2>/dev/null` -a -f /omd/versions/*/bin/gearman_top ]; then
     OMD_VERSION=`omd versions | awk '/default/ {print $1}'`
     GEARMAN_TOP_BIN=/omd/versions/$OMD_VERSION/bin/gearman_top
     export LD_LIBRARY_PATH=/omd/versions/$OMD_VERSION/lib

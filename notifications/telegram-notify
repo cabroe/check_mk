@@ -1,0 +1,35 @@
+#!/bin/bash
+# Telegram Notification
+#
+# References: https://pommi.nethuis.nl/nagios-notifications-via-telegram/
+#             https://github.com/LibreLabUCM/teleg-api-bot/wiki/Getting-started-with-the-Telegram-Bot-API
+#
+
+# Put your @BotFather telegram bot token (substitute the $BOT_TOKEN variable)
+TELEGRAM_TOKEN="bot$BOT_TOKEN" 
+
+# Passing telegram chat_id through parameter on check_mk flexible notifications
+# Check the reference links above to know how to get the chat_id 
+TELEGRAM_CHAT_ID="$NOTIFY_PARAMETER_1"
+
+ICON_OK='\u2705'
+ICON_CRIT='\u274C'
+ICON_UNKN='\u2754'
+
+if [ "$NOTIFY_WHAT" = 'HOST' ]; then
+    case "$NOTIFY_HOSTSTATE" in
+        'DOWN') icon=$ICON_CRIT ;;
+        'UNREACHABLE') icon=$ICON_UNKN ;;
+        'UP') icon=$ICON_OK ;;
+        *) icon='' ;;
+    esac
+    curl -sS -XPOST -H 'Content-Type: application/json' -d "{\"chat_id\":$TELEGRAM_CHAT_ID,\"text\":\"$icon $NOTIFY_HOSTSTATE - $NOTIFY_HOSTNAME $NOTIFY_HOSTOUTPUT\"}" "https://api.telegram.org/$TELEGRAM_TOKEN/sendMessage"
+else
+    case "$NOTIFY_SERVICESTATE" in
+        'CRITICAL') icon=$ICON_CRIT ;;
+        'UNKNOWN') icon=$ICON_UNKN ;;
+        'OK') icon=$ICON_OK ;;
+        *) icon='' ;;
+    esac
+    curl -sS -XPOST -H 'Content-Type: application/json' -d "{\"chat_id\":$TELEGRAM_CHAT_ID,\"text\":\"$icon $NOTIFY_HOSTNAME - $NOTIFY_SERVICEDESC: $NOTIFY_SERVICEOUTPUT\"}" "https://api.telegram.org/$TELEGRAM_TOKEN/sendMessage"
+fi

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Default variables
+OTRS_HOME='/opt/otrs'
+OTRS_USER='otrs'
+OTRS_TASKS_SUMMARY_CFG=${MK_CONFDIR}/otrs_tasks_summary.cfg
+
+# Load custom configs if exists
+[ -f $OTRS_TASKS_SUMMARY_CFG ] && . $OTRS_TASKS_SUMMARY_CFG
+
+echo '<<<otrs_tasks_summary>>>'
+su - $OTRS_USER -c "${OTRS_HOME}/bin/otrs.Console.pl Maint::Daemon::Summary --no-ansi | grep -E '(Success|Fail)'"

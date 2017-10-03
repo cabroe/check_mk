@@ -1,0 +1,38 @@
+title: OTRS Taks Summary
+agents: linux
+catalog: os/kernel
+license: GPL
+distribution: check_mk
+description:
+ This check provides information from the OTRS 5 Console Maint::Daemon::Summary.
+ It shows the status of the OTRS tasks.
+
+ As a preparation, you need to install the agent plugin {otrs_tasks_summary}
+ into your agent's plugins directory ( usually {/usr/lib/check_mk_agent/plugins} ).
+ 
+ The plugin has the following default variables to execute the otrs.Console.pl command:
+ 
+ {OTRS_HOME=/opt/otrs}
+
+ {OTRS_USER=otrs}
+
+ These variables can be customized if defined in {/etc/check_mk/otrs_tasks_summary.cfg}
+  
+item:
+ None 
+
+examples:
+ # Ignore status from SurveyRequestsSend:
+ check_parameters = {
+     ( {'SurveyRequestsSend': 'Ignore'}, [ 'HOST1' ], [ 'OTRS Tasks Summary' ] ),
+ }
+
+inventory:
+ One service with a output of failed tasks or a successful message 
+ and a long output of all tasks info.
+
+[parameters]
+parameters(dict): A dictionary with task name as key and a string with custom status as value.
+
+ { 'TASKNAME' } : 'STATUS' - Custom status for task
+

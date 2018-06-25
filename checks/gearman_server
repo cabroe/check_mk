@@ -21,6 +21,7 @@
 
 # Output is taken from /usr/bin/gearman_top 
 # <<<gearman_server>>>
+#[localhost:4730]
 #  check_results                                  1   0   0 
 #  host                                           5   0   0 
 #  hostgroup_check_mk                             5   0   1 
@@ -42,11 +43,15 @@ factory_settings['gearman_server_default_levels'] = {
 def inventory_gearman_server(info):
     inventory = []
     for item in info:
-        inventory.append((None, {}))
+        if type(item) == list:
+            item = re.match('\[(.*)\]', item[0])
+            if item:
+                inventory.append((item.group(1), {}))
     return inventory
 
 
 def check_gearman_server(item, params, info):
+    item = '['+item+']'
     infotext = ''
     perfdata = []
     status = 0
@@ -56,47 +61,51 @@ def check_gearman_server(item, params, info):
     if not info:
         return (2, 'Gearman Server is not responding.')
 
-    for value in info:
-        if len(value) is not 4:
-            return (3, "Invalid output from plugin")
-        
-        queue = value[0]
-        worker_available = saveint(value[1])
-        jobs_running += int(value[3])
-        jobs_waiting = saveint(value[2])
-        total_jobs_waiting += jobs_waiting
+    for values in info:
+        if item == values[0]:
+            index = info.index(values)
+            for value in info[index+1:]:
+                if ':' in value[0]:
+                    break
+                elif len(value) is not 4:
+                    return (3, "Invalid output from plugin")
 
-        # Warning and Critical values
-        if queue in params:
-            jobs_warn, jobs_crit, worker_warn, worker_crit = params[queue]
-        else:
-            worker_warn, worker_crit = params['worker']
-            jobs_warn, jobs_crit = params['jobs']
+                if len(value) == 4:
+                    queue = value[0]
+                    worker_available = saveint(value[1])
+                    jobs_running += int(value[3])
+                    jobs_waiting = saveint(value[2])
+                    total_jobs_waiting += jobs_waiting
 
-        # Perfdata definitions
-        perfdata.append((queue+'_waiting', jobs_waiting, worker_warn, worker_crit, jobs_warn, jobs_crit, '', ''))
-        perfdata.append((queue+'_running', jobs_running, worker_warn, worker_crit, jobs_warn, jobs_crit, '', ''))
-        perfdata.append((queue+'_worker', worker_available))
+                    # Warning and Critical values
+                    if queue in params:
+                        jobs_warn, jobs_crit, worker_warn, worker_crit = params[queue]
+                    else:
+                        worker_warn, worker_crit = params['worker']
+                        jobs_warn, jobs_crit = params['jobs']
 
-        if 'worker_' in queue or 'check_result' in queue:
-            if worker_available < 1:
-                status = 2
-                infotext += 'Queue %s(!!) has no worker. ' % (queue)
-        else:
-            if worker_available <= worker_crit:
-                status = 2
-                infotext += 'Queue %s(!!) has %d workers. ' % (queue, worker_available)
-            elif worker_available <= worker_warn:
-                if status is not 2: 
-                    status = 1 
-                    infotext += 'Queue %s(!) has %d workers. ' % (queue, worker_available)
-            elif jobs_waiting > jobs_crit:
-                status = 2
-                infotext += 'Queue %s(!!) has %d waiting jobs. ' % (queue, jobs_waiting)
-            elif jobs_waiting > jobs_warn:
-                if status is not 2: 
-                    status = 1 
-                    infotext += 'Queue %s(!) has %d waiting jobs. ' % (queue, jobs_waiting)
+                    # Perfdata definitions
+                    perfdata.append((queue+'_waiting', jobs_waiting, jobs_warn, jobs_crit, worker_warn, worker_crit))
+                    perfdata.append((queue+'_running', jobs_running, jobs_warn, jobs_crit, worker_warn, worker_crit))
+                    perfdata.append((queue+'_worker', worker_available))
+
+                    if 'worker_' in queue or 'check_result' in queue:
+                        if worker_available < 1:
+                            status = 2
+                            infotext += 'Queue %s(!!) has no worker. ' % (queue)
+                    else:
+                        if worker_available < worker_crit:
+                            status = 2
+                            infotext += 'Queue %s(!!) has %d workers. ' % (queue, worker_available)
+                        elif worker_available < worker_warn:
+                            if status is not 2: status = 1 
+                            infotext += 'Queue %s(!) has %d workers. ' % (queue, worker_available)
+                        elif jobs_waiting > jobs_crit:
+                            status = 2
+                            infotext += 'Queue %s(!!) has %d waiting jobs. ' % (queue, jobs_waiting)
+                        elif jobs_waiting > jobs_warn:
+                            if status is not 2: status = 1 
+                            infotext += 'Queue %s(!) has %d waiting jobs. ' % (queue, jobs_waiting)
     if status == 0:
         infotext = '%d jobs running and %d jobs waiting. ' % (jobs_running, total_jobs_waiting)
 
@@ -105,7 +114,7 @@ def check_gearman_server(item, params, info):
 check_info['gearman_server'] = {
     'inventory_function'      : inventory_gearman_server,
     'check_function'          : check_gearman_server,
-    'service_description'     : 'Gearman Server',
+    'service_description'     : 'Gearman Server %s',
     'has_perfdata'            : True,
     "default_levels_variable" : "gearman_server_default_levels",
 }

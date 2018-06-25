@@ -4,15 +4,30 @@
 # Author: Phillipe Smith <phillipe.chaves@camara.leg.br>
 #
 
-if [ `which omd 2>/dev/null` -a -f /omd/versions/*/bin/gearman_top ]; then
-    OMD_VERSION=`omd versions | awk '/default/ {print $1}'`
-    GEARMAN_TOP_BIN=/omd/versions/$OMD_VERSION/bin/gearman_top
-    export LD_LIBRARY_PATH=/omd/versions/$OMD_VERSION/lib
-else
-    GEARMAN_TOP_BIN=`which gearman_top 2>/dev/null`
+echo -e "<<<gearman_server>>>"
+
+if [ `which omd 2>/dev/null` ]; then
+    for SITE in $(omd sites | awk '{print $1}')
+    do
+        export LD_LIBRARY_PATH=/omd/sites/$SITE/lib
+        source /omd/sites/$SITE/etc/omd/site.conf
+        GEARMAN_TOP_BIN=/omd/sites/$SITE/bin/gearman_top
+
+        if [ "$CONFIG_GEARMAND" = 'on' -a -x "$GEARMAN_TOP_BIN" ]; then
+            for i in {1..3}; do RESULT="[$SITE:$CONFIG_GEARMAND_PORT]\n$($GEARMAN_TOP_BIN -H $CONFIG_GEARMAND_PORT -b | /bin/sed -r '1,4d; $d; s/\| +/ /g; s/(.*\d)$/\1\\n/g')"; sleep 0.5; done
+        fi
+        echo -e "$RESULT"
+    done
 fi
 
-if [ "$GEARMAN_TOP_BIN" ]; then
-    for i in {1..3}; do result=$($GEARMAN_TOP_BIN -b | /bin/sed -r '1,4d; $d; s/\| +/ /g; s/(.*\d)$/\1\\n/g'); sleep 1; done
-    echo -e "<<<gearman_server>>>\n$result"
+if [ `which gearman_top` 2> /dev/null ]; then
+    GEARMAN_TOP_BIN=`which gearman_top`
+    SERVERS=$(awk 'match($0, "^server=(.*)", m) {gsub(",", " ", m[1]); print m[1]}' /etc/mod_gearman/*.conf | uniq)
+
+    for SERVER in $SERVERS
+    do
+        for i in {1..3}; do RESULT="[$SERVER]\n$($GEARMAN_TOP_BIN -H $SERVER -b | /bin/sed -r '1,4d; $d; s/\| +/ /g; s/(.*\d)$/\1\\n/g')"; sleep 0.5; done
+    done
+    echo -e "$RESULT"
 fi
+

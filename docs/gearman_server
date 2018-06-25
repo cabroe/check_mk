@@ -18,11 +18,11 @@ examples:
 
  check_parameters = [
     # Using levels of 10 (warning) and 5 (critical) for minimum number of workers available
-    ( { 'worker': (10, 5) }, ALL_HOSTS, [ 'Gearman Server' ] ),
+    ( { 'worker': (10, 5) }, ALL_HOSTS, [ 'Gearman Server localhost:4730' ] ),
 
     # Using levels of 1000 (warning) and 2000 (critical) for minimum number of jobs waiting
     # and levels of 10 (warning) and 5 (critical) for minimum number of workers avaliable for a specific queue
-    ( { 'servicegroup_custom': (1000, 2000, 10, 5) }, [ 'HOST_1' ], [ 'Gearman Server' ] ),
+    ( { 'servicegroup_custom': (1000, 2000, 10, 5) }, [ 'HOST_1' ], [ 'Gearman Server localhost:4730' ] ),
  ]
 
 perfdata:

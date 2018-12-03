@@ -14,7 +14,7 @@ description:
 examples:
  # Set warning and critical levels to the workers available and/or jobs waiting of all queues
  gearman_server_jobs_default_levels = (50, 100)
- gearman_server_worker_default_levels = (1, 1)
+ gearman_server_worker_default_levels = (5, 5)
 
  check_parameters = [
     # Using levels of 10 (warning) and 5 (critical) for minimum number of workers available
@@ -46,5 +46,5 @@ parameters (dict): A dictionary with a tuple of values for jobs and worker
 
 [configuration]
 gearman_server_jobs_default_levels (int, int): Default levels for jobs waiting. Default is (10, 100)
-gearman_server_worker_default_levels (int, int): Default levels for workers available. Default is (1, 1)
+gearman_server_worker_default_levels (int, int): Default levels for workers available. Default is (5, 5)
 

@@ -33,7 +33,7 @@
 
 # Threshold levels
 gearman_server_jobs_default_levels     = (10, 100)
-gearman_server_worker_default_levels   = (1, 1)
+gearman_server_worker_default_levels   = (5, 5)
 
 factory_settings['gearman_server_default_levels'] = {
     'jobs'    : gearman_server_jobs_default_levels, 
@@ -81,31 +81,30 @@ def check_gearman_server(item, params, info):
                     if queue in params:
                         jobs_warn, jobs_crit, worker_warn, worker_crit = params[queue]
                     else:
-                        worker_warn, worker_crit = params['worker']
+                        if 'worker_' in queue or queue == 'check_results':
+                            worker_warn, worker_crit = (0, 0)
+                        else:
+                            worker_warn, worker_crit = params['worker']
+
                         jobs_warn, jobs_crit = params['jobs']
 
                     # Perfdata definitions
-                    perfdata.append((queue+'_waiting', jobs_waiting, jobs_warn, jobs_crit, worker_warn, worker_crit))
-                    perfdata.append((queue+'_running', jobs_running, jobs_warn, jobs_crit, worker_warn, worker_crit))
-                    perfdata.append((queue+'_worker', worker_available))
+                    perfdata.append((queue+'_waiting', jobs_waiting, jobs_warn, jobs_crit))
+                    perfdata.append((queue+'_running', jobs_running, jobs_warn, jobs_crit))
+                    perfdata.append((queue+'_worker', worker_available, worker_warn, worker_crit))
 
-                    if 'worker_' in queue or 'check_result' in queue:
-                        if worker_available < 1:
-                            status = 2
-                            infotext += 'Queue %s(!!) has no worker. ' % (queue)
-                    else:
-                        if worker_available < worker_crit:
-                            status = 2
-                            infotext += 'Queue %s(!!) has %d workers. ' % (queue, worker_available)
-                        elif worker_available < worker_warn:
-                            if status is not 2: status = 1 
-                            infotext += 'Queue %s(!) has %d workers. ' % (queue, worker_available)
-                        elif jobs_waiting > jobs_crit:
-                            status = 2
-                            infotext += 'Queue %s(!!) has %d waiting jobs. ' % (queue, jobs_waiting)
-                        elif jobs_waiting > jobs_warn:
-                            if status is not 2: status = 1 
-                            infotext += 'Queue %s(!) has %d waiting jobs. ' % (queue, jobs_waiting)
+                    if worker_available <= worker_crit:
+                        status = 2
+                        infotext += 'Queue %s(!!) has %d workers. ' % (queue, worker_available)
+                    elif worker_available <= worker_warn:
+                        if status is not 2: status = 1 
+                        infotext += 'Queue %s(!) has %d workers. ' % (queue, worker_available)
+                    elif jobs_waiting >= jobs_crit:
+                        status = 2
+                        infotext += 'Queue %s(!!) has %d waiting jobs. ' % (queue, jobs_waiting)
+                    elif jobs_waiting >= jobs_warn:
+                        if status is not 2: status = 1 
+                        infotext += 'Queue %s(!) has %d waiting jobs. ' % (queue, jobs_waiting)
     if status == 0:
         infotext = '%d jobs running and %d jobs waiting. ' % (jobs_running, total_jobs_waiting)
 
